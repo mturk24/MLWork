@@ -12,7 +12,11 @@ class BinaryClassificationTask():
 
         trans = transforms.Compose([transforms.ToTensor()])
         self.train_set = dset.MNIST(root='./data/', train=True, transform=trans, download=args.download)
+        
+        # print(len(self.train_set), "length of train set")
+
         self.test_set = dset.MNIST(root='./data/', train=False, transform=trans)
+    
         
     def salt_and_pepper_noise(self, x):
         probs = torch.rand(*x.size())
@@ -27,10 +31,17 @@ class BinaryClassificationTask():
         self.classes = [x for x in self.classes if x not in labels] 
         
         print('Binary classification between {} and {}'.format(labels[0], labels[1]))
-        
+        # print(self.train_set, "this is train_set")
+        # print(len(self.train_set), "length of train_set")
+        # print(self.train_set[0], "first part of train_set")
+        # print(self.train_set[1], "second part of train_set")
         train_set = self.convert2tensor(self.train_set, labels, train=True)
+
         test_set = self.convert2tensor(self.test_set, labels)
-        
+
+#        print(train_set[0], "first part of train set") #floatTensor of size 50176 but not ones and zeros
+#        print(train_set[1], "second part of train set")
+
         train_loader = DataLoader(train_set, 
                                   self.args.batch_size, 
                                   shuffle=True)
@@ -38,17 +49,19 @@ class BinaryClassificationTask():
         test_loader = DataLoader(test_set, 
                                  self.args.batch_size, 
                                  shuffle=True)
-        
+
         return train_loader, test_loader
 
     def convert2tensor(self, dset, labels, train=False):
         x_set = []
         y_set = []
+        print(labels, "these are the labels")
         
         for x, y in dset:
             if y == labels[0]:
                 x_set.append(x)
                 y_set.append(torch.LongTensor([0]))
+            
             elif y == labels[1]:
                 x_set.append(x)
                 y_set.append(torch.LongTensor([1]))
@@ -57,8 +70,6 @@ class BinaryClassificationTask():
         x_set = x_set.view(x_set.size()[0], -1)
         if train:
             x_set = self.salt_and_pepper_noise(x_set)
-        
         y_set = torch.cat(y_set, 0)
         dataset = TensorDataset(x_set, y_set)
-        
         return dataset

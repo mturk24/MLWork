@@ -16,9 +16,15 @@ class PathNet(nn.Module):
         self.args = args
         
         self.relu = nn.ReLU()
-        self.layer1 = [nn.Linear(28 * 28, 20) for i in range(self.args.M)]
+        if self.args.type_task == 3:
+            self.layer1 = [nn.Linear(50176, 20) for i in range(self.args.M)]
+        else:
+            self.layer1 = [nn.Linear(28 * 28, 20) for i in range(self.args.M)] #10 modules to each layer
         self.layer2 = [nn.Linear(20, 20) for i in range(self.args.M)]
         self.layer3 = [nn.Linear(20, 20) for i in range(self.args.M)]
+        # print(self.layer1, "layer1")
+        # print(self.layer2, "layer2")
+        # print(self.layer3, "layer3")
         
         self.optimizer_params = []
         for m in range(self.args.M):
@@ -39,15 +45,20 @@ class PathNet(nn.Module):
         layer3_active_modules_index = list(set(pathway[2]))
         
         layer1_output = [self.relu(self.layer1[m](x)) for m in layer1_active_modules_index]
+        # print(len(layer1_output), "length of layer1 output") -> 3
         layer1_output_sum = self.sum_layer(layer1_output)
 
         layer2_output = [self.relu(self.layer2[m](layer1_output_sum)) for m in layer2_active_modules_index]
+        # print(len(layer2_output), "length of layer2 output") -> 2
         layer2_output_sum = self.sum_layer(layer2_output)
 
         layer3_output = [self.relu(self.layer3[m](layer2_output_sum)) for m in layer3_active_modules_index]
+        # print(len(layer3_output), "length of layer3 output") -> 3
         layer3_output_sum = self.sum_layer(layer3_output)
 
+
         output = self.last_layer(layer3_output_sum)
+        # print(len(output), "length of output") -> 16
         
         return output
         
